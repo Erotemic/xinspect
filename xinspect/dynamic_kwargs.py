@@ -2,17 +2,107 @@ import six
 import inspect
 import re
 import types
+import ubelt as ub
+import textwrap
 from xinspect.static_kwargs import parse_kwarg_keys
+
+
+REGEX_NONGREEDY = '*?'
+
+
+def bref_field(key):
+    """ regex backreference """
+    return r'\g<%s>' % (key)
+
+
+def named_field(key, regex, vim=False):
+    """
+    Creates a named regex group that can be referend via a backref.
+    If key is None the backref is referenced by number.
+
+    References:
+        https://docs.python.org/2/library/re.html#regular-expression-syntax
+    """
+    if key is None:
+        #return regex
+        return r'(%s)' % (regex,)
+    if vim:
+        return r'\(%s\)' % (regex)
+    else:
+        return r'(?P<%s>%s)' % (key, regex)
+
+
+def is_func_or_method(var):
+    return isinstance(var, (types.MethodType, types.FunctionType))
+
+
+def get_funcglobals(func):
+    if six.PY2:
+        return getattr(func, 'func_globals')
+    else:
+        return getattr(func, '__globals__')
+
+
+def parse_func_kwarg_keys(func, with_vals=False):
+    """ hacky inference of kwargs keys
+
+    SeeAlso:
+        argparse_funckw
+        recursive_parse_kwargs
+        parse_kwarg_keys
+        parse_func_kwarg_keys
+        get_func_kwargs
+
+    """
+    sourcecode = get_func_sourcecode(func, strip_docstr=True,
+                                     strip_comments=True)
+    kwkeys = parse_kwarg_keys(sourcecode, with_vals=with_vals)
+    #get_func_kwargs  TODO
+    return kwkeys
+
+
+def get_kwdefaults(func, parse_source=False):
+    r"""
+    Args:
+        func (func):
+
+    Returns:
+        dict:
+
+    CommandLine:
+        python -m utool.util_inspect get_kwdefaults
+
+    Example:
+        >>> # ENABLE_DOCTEST
+        >>> from utool.util_inspect import *  # NOQA
+        >>> func = dummy_func
+        >>> parse_source = True
+        >>> kwdefaults = get_kwdefaults(func, parse_source)
+        >>> print('kwdefaults = %s' % (ub.repr2(kwdefaults),))
+    """
+    argspec = inspect.getargspec(func)
+    kwdefaults = {}
+    if argspec.args is None or argspec.defaults is None:
+        pass
+    else:
+        args = argspec.args
+        defaults = argspec.defaults
+        #kwdefaults = OrderedDict(zip(argspec.args[::-1], argspec.defaults[::-1]))
+        kwpos = len(args) - len(defaults)
+        kwdefaults = ub.odict(zip(args[kwpos:], defaults))
+    if parse_source and argspec.keywords:
+        # TODO parse for kwargs.get/pop
+        keyword_defaults = parse_func_kwarg_keys(func, with_vals=True)
+        for key, val in keyword_defaults:
+            assert key not in kwdefaults, 'parsing error'
+            kwdefaults[key] = val
+    return kwdefaults
 
 
 def lookup_attribute_chain(attrname, namespace):
     """
         >>> attrname = funcname
         >>> namespace = mod.__dict__
-
-
-        >>> import utool as ut
-        >>> globals_ = ut.util_inspect.__dict__
         >>> attrname = 'KWReg.print_defaultkw'
     """
     #subdict = meta_util_six.get_funcglobals(root_func)
@@ -52,10 +142,9 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
     Example:
         >>> # ENABLE_DOCTEST
         >>> from utool.util_inspect import *  # NOQA
-        >>> import utool as ut
         >>> root_func = iter_module_doctestable
         >>> path_ = None
-        >>> result = ut.repr2(recursive_parse_kwargs(root_func), nl=1)
+        >>> result = ub.repr2(recursive_parse_kwargs(root_func), nl=1)
         >>> print(result)
         [
             ('include_funcs', True),
@@ -72,21 +161,20 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
         >>> from ibeis.algo.hots import chip_match
         >>> root_func = chip_match.ChipMatch.show_ranked_matches
         >>> path_ = None
-        >>> result = ut.repr2(recursive_parse_kwargs(root_func))
+        >>> result = ub.repr2(recursive_parse_kwargs(root_func))
         >>> print(result)
 
     Example:
-        >>> import ubelt as ub
         >>> modname = ub.argval('--mod', default='plottool')
         >>> funcname = ub.argval('--func', default='draw_histogram')
-        >>> mod = ut.import_modname(modname)
+        >>> mod = ub.import_module_from_name(modname)
         >>> root_func = lookup_attribute_chain(funcname, mod.__dict__)
         >>> path_ = None
         >>> parsed = recursive_parse_kwargs(root_func)
-        >>> flags = ut.unique_flags(ut.take_column(parsed, 0))
-        >>> unique = ut.compress(parsed, flags)
-        >>> print('parsed = %s' % (ut.repr4(parsed),))
-        >>> print('unique = %s' % (ut.repr4(unique),))
+        >>> flags = ub.unique_flags([p[0] for p in parsed])
+        >>> unique = list(ub.compress(parsed, flags))
+        >>> print('parsed = %s' % (ub.repr2(parsed),))
+        >>> print('unique = %s' % (ub.repr2(unique),))
     """
     if verbose is None:
         verbose = False
@@ -103,11 +191,10 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
     spec = get_func_argspec(root_func)
     # ADD MORE
     kwargs_list = []
-    found_explicit = list(ut.get_kwdefaults(root_func, parse_source=False).items())
+    found_explicit = list(get_kwdefaults(root_func, parse_source=False).items())
     if verbose:
         print('[inspect] * Found explicit %r' % (found_explicit,))
 
-    #kwargs_list = [(kw,) for kw in  ut.get_kwargs(root_func)[0]]
     sourcecode = get_func_sourcecode(root_func, strip_docstr=True,
                                         stripdef=True)
     sourcecode1 = get_func_sourcecode(root_func, strip_docstr=True,
@@ -124,23 +211,23 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
         # look it up.  Maybe args, or returns can help infer type.  Maybe just
         # register some known varnames.  Maybe jedi has some better way to do
         # this.
-        if attr == 'ut':
-            subdict = ut.__dict__
-        elif attr == 'pt':
-            import plottool as pt
-            subdict = pt.__dict__
-        else:
-            subdict = None
+        # if attr == 'ut':
+        #     subdict = ut.__dict__
+        # elif attr == 'pt':
+        #     import plottool as pt
+        #     subdict = pt.__dict__
+        # else:
+        subdict = None
         return subdict
 
     def resolve_attr_subfunc(subfunc_name):
         # look up attriute chain
         #subdict = root_func.func_globals
-        subdict = meta_util_six.get_funcglobals(root_func)
+        subdict = get_funcglobals(root_func)
         subtup = subfunc_name.split('.')
         try:
             subdict = lookup_attribute_chain(subfunc_name, subdict)
-            if ut.is_func_or_method(subdict):
+            if is_func_or_method(subdict):
                 # Was subdict supposed to be named something else here?
                 subfunc = subdict
                 return subfunc
@@ -206,7 +293,6 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
 
     Example:
         >>> # ENABLE_DOCTEST
-        >>> import ubelt as ub
         >>> sourcecode = ub.codeblock(
                 '''
                 x, y = list(zip(*ub.ichunks(data, 2)))
@@ -242,10 +328,9 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
 
     class KwargParseVisitor(ast.NodeVisitor):
         """
-        TODO: understand ut.update_existing and dict update
-        ie, know when kwargs is passed to these functions and
-        then look assume the object that was updated is a dictionary
-        and check wherever that is passed to kwargs as well.
+        TODO: understand dict update ie, know when kwargs is passed to these
+        functions and then look assume the object that was updated is a
+        dictionary and check wherever that is passed to kwargs as well.
         """
         def visit_FunctionDef(self, node):
             if debug:
@@ -348,10 +433,8 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
         >>> stripdef = True
         >>> stripret = True
         >>> sourcecode = get_func_sourcecode(func, stripdef)
-        >>> # verify results
-        >>> print(result)
+        >>> print('sourcecode = {}'.format(sourcecode))
     """
-    import utool as ut
     #try:
     inspect.linecache.clearcache()  # HACK: fix inspect bug
     sourcefile = inspect.getsourcefile(func)
@@ -382,34 +465,27 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
                     raise
     else:
         sourcecode = None
-    #orig_source = sourcecode
-    #print(orig_source)
     if stripdef:
         # hacky
-        sourcecode = ut.unindent(sourcecode)
-        #sourcecode = ut.unindent(ut.regex_replace('def [^)]*\\):\n', '', sourcecode))
-        #nodef_source = ut.regex_replace('def [^:]*\\):\n', '', sourcecode)
-        regex_decor = '^@.' + ut.REGEX_NONGREEDY
+        sourcecode = textwrap.dedent(sourcecode)
+        regex_decor = '^@.' + REGEX_NONGREEDY
         regex_defline = '^def [^:]*\\):\n'
         patern = '(' + regex_decor + ')?' + regex_defline
-        nodef_source = ut.regex_replace(patern, '', sourcecode)
-        sourcecode = ut.unindent(nodef_source)
+        RE_FLAGS = re.MULTILINE | re.DOTALL
+        RE_KWARGS = {'flags': RE_FLAGS}
+        nodef_source = re.sub(patern, '', sourcecode, **RE_KWARGS)
+        sourcecode = textwrap.dedent(nodef_source)
         #print(sourcecode)
         pass
     if stripret:
         r""" \s is a whitespace char """
-        return_ = ut.named_field('return', 'return .*$')
-        prereturn = ut.named_field('prereturn', r'^\s*')
-        return_bref = ut.bref_field('return')
-        prereturn_bref = ut.bref_field('prereturn')
+        return_ = named_field('return', 'return .*$')
+        prereturn = named_field('prereturn', r'^\s*')
+        return_bref = bref_field('return')
+        prereturn_bref = bref_field('prereturn')
         regex = prereturn + return_
         repl = prereturn_bref + 'pass  # ' + return_bref
-        #import re
-        #print(re.search(regex, sourcecode, flags=re.MULTILINE ))
-        #print(re.search('return', sourcecode, flags=re.MULTILINE | re.DOTALL ))
-        #print(re.search(regex, sourcecode))
         sourcecode_ = re.sub(regex, repl, sourcecode, flags=re.MULTILINE)
-        #print(sourcecode_)
         sourcecode = sourcecode_
         pass
     if strip_docstr or strip_comments:
@@ -460,6 +536,33 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
 
     if remove_linenums is not None:
         source_lines = sourcecode.strip('\n').split('\n')
-        ut.delete_items_by_index(source_lines, remove_linenums)
+        delete_items_by_index(source_lines, remove_linenums)
         sourcecode = '\n'.join(source_lines)
     return sourcecode
+
+
+def delete_items_by_index(list_, index_list, copy=False):
+    """
+    Remove items from ``list_`` at positions specified in ``index_list``
+    The original ``list_`` is preserved if ``copy`` is True
+
+    Args:
+        list_ (list):
+        index_list (list):
+        copy (bool): preserves original list if True
+
+    Example:
+        >>> list_ = [8, 1, 8, 1, 6, 6, 3, 4, 4, 5, 6]
+        >>> index_list = [2, -1]
+        >>> delete_items_by_index(list_, index_list)
+        [8, 1, 1, 6, 6, 3, 4, 4, 5]
+    """
+    if copy:
+        list_ = list_[:]
+    # Rectify negative indicies
+    index_list_ = [(len(list_) + x if x < 0 else x) for x in index_list]
+    # Remove largest indicies first
+    index_list_ = sorted(index_list_, reverse=True)
+    for index in index_list_:
+        del list_[index]
+    return list_

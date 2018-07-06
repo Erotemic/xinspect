@@ -1,63 +1,57 @@
-# encoding: utf-8
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """
 Installation:
-    pip install git+https://github.com/Erotemic/xdoctest.git
+    pip install git+https://github.com/Erotemic/xinspect.git
 
 Developing:
-    git clone https://github.com/Erotemic/xdoctest.git
-    pip install -e xdoctest
+    git clone https://github.com/Erotemic/xinspect.git
+    pip install -e xinspect
 
 Pypi:
-    cd ~/code/xdoctest
+     # Presetup
+     pip install twine
 
-    # Presetup
-    pip install twine
+     # First tag the source-code
+     VERSION=$(python -c "import setup; print(setup.version)")
+     echo $VERSION
+     git tag $VERSION -m "tarball tag $VERSION"
+     git push --tags origin master
 
-    # First tag the source-code
-    VERSION=$(python -c "import setup; print(setup.parse_version())")
-    echo $VERSION
-    git tag $VERSION -m "tarball tag $VERSION"
-    git push --tags origin master
+     # NEW API TO UPLOAD TO PYPI
+     # https://packaging.python.org/tutorials/distributing-packages/
 
-    # NEW API TO UPLOAD TO PYPI
-    # https://packaging.python.org/tutorials/distributing-packages/
+     # Build wheel or source distribution
+     python setup.py bdist_wheel --universal
 
-    # Build wheel or source distribution
-    python setup.py bdist_wheel --universal
+     # Use twine to upload. This will prompt for username and password
+     # If you get an error:
+     #   403 Client Error: Invalid or non-existent authentication information.
+     # simply try typing your password slower.
+     twine upload --username erotemic --skip-existing dist/*
 
-    # Use twine to upload. This will prompt for username and password
-    twine upload --username erotemic --skip-existing dist/*
+     # Check the url to make sure everything worked
+     https://pypi.org/project/xinspect/
 
-    # Check the url to make sure everything worked
-    https://pypi.org/project/xdoctest/
+     # ---------- OLD ----------------
+     # Check the url to make sure everything worked
+     https://pypi.python.org/pypi?:action=display&name=xinspect
 
-    # ---------- OLD ----------------
-    # Check the url to make sure everything worked
-    https://pypi.python.org/pypi?:action=display&name=xdoctest
-
-Notes:
-    In case you need to delete a tag
-    git push --delete origin tagname
-    git tag --delete tagname
 """
 from setuptools import setup
-
-setupkw = dict(
-    author='Jon Crall',
-    name='xdoctest',
-    author_email='erotemic@gmail.com',
-    url='https://github.com/Erotemic/xdoctest',
-    license='Apache 2',
-    packages=['xdoctest'],
-)
+import sys
 
 
-def parse_version():
-    """ Statically parse the version number from __init__.py """
+def parse_version(package):
+    """
+    Statically parse the version number from __init__.py
+
+    CommandLine:
+        python -c "import setup; print(setup.parse_version('xinspect'))"
+    """
     from os.path import dirname, join
     import ast
-    modname = setupkw['name']
-    init_fpath = join(dirname(__file__), modname, '__init__.py')
+    init_fpath = join(dirname(__file__), package, '__init__.py')
     with open(init_fpath) as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
@@ -69,6 +63,24 @@ def parse_version():
     visitor = VersionVisitor()
     visitor.visit(pt)
     return visitor.version
+
+
+def parse_description():
+    """
+    Parse the description in the README file
+
+    CommandLine:
+        pandoc --from=markdown --to=rst --output=README.rst README.md
+        python -c "import setup; print(setup.parse_description())"
+    """
+    from os.path import dirname, join, exists
+    readme_fpath = join(dirname(__file__), 'README.rst')
+    # This breaks on pip install, so check that it exists.
+    if exists(readme_fpath):
+        with open(readme_fpath, 'r') as f:
+            text = f.read()
+        return text
+    return ''
 
 
 def parse_requirements(fname='requirements.txt'):
@@ -93,44 +105,57 @@ def parse_requirements(fname='requirements.txt'):
                         package = line.split('#egg=')[1]
                         packages.append(package)
                     else:
-                        pat = '|'.join(['>', '>=', '=='])
-                        package = re.split(pat, line)[0]
+                        # Remove versioning from the package
+                        pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+                        parts = re.split(pat, line, maxsplit=1)
+                        parts = [p.strip() for p in parts]
+
+                        package = parts[0]
+                        if len(parts) > 1:
+                            op, rest = parts[1:]
+                            if ';' in rest:
+                                # Declaring platform specific dependencies
+                                # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                                version, platform_deps = map(str.strip, rest.split(';'))
+                                if not sys.version.startswith('3.4'):
+                                    # apparently this breaks in 3.4
+                                    package = package + ';' + platform_deps
+                                # if platform_deps == 'platform_system=="Windows"':
+                                #     pass
+                            else:
+                                version = rest  # NOQA
+
                         packages.append(package)
             return packages
     return []
 
 
+version = parse_version('xinspect')  # needs to be a global var for git tags
+
 if __name__ == '__main__':
     setup(
-        version=parse_version(),
-        description='A rewrite of the builtin doctest module',
+        name='xinspect',
+        version=version,
+        author='Jon Crall',
+        long_description=parse_description(),
         install_requires=parse_requirements('requirements.txt'),
         extras_require={
             'all': parse_requirements('optional-requirements.txt')
         },
-        # long_description=parse_description(),
-        entry_points={
-            # the pytest11 entry point makes the plugin available to pytest
-            'pytest11': [
-                'xdoctest = xdoctest.plugin',
-            ],
-            # the console_scripts entry point creates the xdoctest executable
-            'console_scripts': [
-                'xdoctest = xdoctest.__main__:main'
-            ]
-        },
-        # custom PyPI classifier for pytest plugins
+        author_email='erotemic@gmail.com',
+        url='https://github.com/Erotemic/xinspect',
+        license='Apache 2',
+        packages=['xinspect'],
         classifiers=[
-            'Framework :: Pytest',
-            'Development Status :: 3 - Alpha',
+            # List of classifiers available at:
+            # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+            'Development Status :: 4 - Beta',
             'Intended Audience :: Developers',
             'Topic :: Software Development :: Libraries :: Python Modules',
             'Topic :: Utilities',
             # This should be interpreted as Apache License v2.0
             'License :: OSI Approved :: Apache Software License',
             # Supported Python versions
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
         ],
-        **setupkw
     )

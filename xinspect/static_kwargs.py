@@ -22,17 +22,22 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
         get_func_kwargs
 
     Example:
-        >>> source = (
-        >>>           "\n x = 'hidden_x'"
-        >>>           "\n y = 3 # hidden val"
-        >>>           "\n kwargs.get(x, y)"
-        >>>           "\n kwargs.get('foo', None)\n kwargs.pop('bar', 3)"
-        >>>           "\n kwargs.pop('str', '3fd')\n kwargs.pop('str', '3f\\'d')"
-        >>>           "\n \"kwargs.get('baz', None)\"\n kwargs['foo2']"
-        >>>           "\n #kwargs.get('biz', None)\""
-        >>>           "\n kwargs['bloop']"
-        >>>           "\n x = 'bop' in kwargs"
-        >>>           )
+        >>> import ubelt as ub
+        >>> source = ub.codeblock(
+        >>>    '''
+        >>>    x = 'hidden_x'
+        >>>    y = 3 # hidden val
+        >>>    kwargs.get(x, y)
+        >>>    kwargs.get('foo', None)
+        >>>    kwargs.pop('bar', 3)
+        >>>    kwargs.pop('str', '3fd')
+        >>>    kwargs.pop('str', '3f"d')
+        >>>    "kwargs.get('baz', None)"
+        >>>    kwargs['foo2']
+        >>>    #kwargs.get('biz', None)"
+        >>>    kwargs['bloop']
+        >>>    x = 'bop' in kwargs
+        >>>    ''')
         >>> print('source = %s\n' % (source,))
         >>> with_vals = True
         >>> kwarg_items = parse_kwarg_keys(source, with_vals=with_vals)
@@ -47,7 +52,7 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
             ('foo', None),
             ('bar', 3),
             ('str', '3fd'),
-            ('str', "3f'd"),
+            ('str', '3f"d'),
             ('foo2', None),
             ('bloop', None),
         ]
@@ -202,3 +207,11 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
         return kwargs_items
     else:
         return [item[0] for item in kwargs_items]
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m xinspect.static_kwargs all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)
