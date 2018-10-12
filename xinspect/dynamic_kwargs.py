@@ -69,16 +69,16 @@ def get_kwdefaults(func, parse_source=False):
     Returns:
         dict:
 
-    CommandLine:
-        python -m utool.util_inspect get_kwdefaults
+    # CommandLine:
+    #     python -m utool.util_inspect get_kwdefaults
 
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from utool.util_inspect import *  # NOQA
-        >>> func = dummy_func
-        >>> parse_source = True
-        >>> kwdefaults = get_kwdefaults(func, parse_source)
-        >>> print('kwdefaults = %s' % (ub.repr2(kwdefaults),))
+    # Example:
+    #     >>> # ENABLE_DOCTEST
+    #     >>> from utool.util_inspect import *  # NOQA
+    #     >>> func = dummy_func
+    #     >>> parse_source = True
+    #     >>> kwdefaults = get_kwdefaults(func, parse_source)
+    #     >>> print('kwdefaults = %s' % (ub.repr2(kwdefaults),))
     """
     argspec = inspect.getargspec(func)
     kwdefaults = {}
@@ -128,45 +128,34 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
     Returns:
         list:
 
-    CommandLine:
-        python -m utool.util_inspect recursive_parse_kwargs:0
-        python -m utool.util_inspect recursive_parse_kwargs:0 --verbinspect
-        python -m utool.util_inspect recursive_parse_kwargs:1
-        python -m utool.util_inspect recursive_parse_kwargs:2 --mod plottool --func draw_histogram
+    # Example:
+    #     >>> # ENABLE_DOCTEST
+    #     >>> from utool.util_inspect import *  # NOQA
+    #     >>> root_func = iter_module_doctestable
+    #     >>> path_ = None
+    #     >>> result = ub.repr2(recursive_parse_kwargs(root_func), nl=1)
+    #     >>> print(result)
+    #     [
+    #         ('include_funcs', True),
+    #         ('include_classes', True),
+    #         ('include_methods', True),
+    #         ('include_builtin', True),
+    #         ('include_inherited', False),
+    #         ('debug_key', None),
+    #     ]
 
-        python -m utool.util_inspect recursive_parse_kwargs:2 --mod vtool --func ScoreNormalizer.visualize
-
-        python -m utool.util_inspect recursive_parse_kwargs:2 --mod ibeis.viz.viz_matches --func show_name_matches --verbinspect
-        python -m utool.util_inspect recursive_parse_kwargs:2 --mod ibeis.expt.experiment_drawing --func draw_rank_cmc --verbinspect
-
-    Example:
-        >>> # ENABLE_DOCTEST
-        >>> from utool.util_inspect import *  # NOQA
-        >>> root_func = iter_module_doctestable
-        >>> path_ = None
-        >>> result = ub.repr2(recursive_parse_kwargs(root_func), nl=1)
-        >>> print(result)
-        [
-            ('include_funcs', True),
-            ('include_classes', True),
-            ('include_methods', True),
-            ('include_builtin', True),
-            ('include_inherited', False),
-            ('debug_key', None),
-        ]
+    # Example:
+    #     >>> # DISABLE_DOCTEST
+    #     >>> from utool.util_inspect import *  # NOQA
+    #     >>> from ibeis.algo.hots import chip_match
+    #     >>> root_func = chip_match.ChipMatch.show_ranked_matches
+    #     >>> path_ = None
+    #     >>> result = ub.repr2(recursive_parse_kwargs(root_func))
+    #     >>> print(result)
 
     Example:
-        >>> # DISABLE_DOCTEST
-        >>> from utool.util_inspect import *  # NOQA
-        >>> from ibeis.algo.hots import chip_match
-        >>> root_func = chip_match.ChipMatch.show_ranked_matches
-        >>> path_ = None
-        >>> result = ub.repr2(recursive_parse_kwargs(root_func))
-        >>> print(result)
-
-    Example:
-        >>> modname = ub.argval('--mod', default='plottool')
-        >>> funcname = ub.argval('--func', default='draw_histogram')
+        >>> modname = ub.argval('--mod', default='ubelt')
+        >>> funcname = ub.argval('--func', default='cmd')
         >>> mod = ub.import_module_from_name(modname)
         >>> root_func = lookup_attribute_chain(funcname, mod.__dict__)
         >>> path_ = None
