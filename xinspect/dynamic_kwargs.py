@@ -185,9 +185,9 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
         print('[inspect] * Found explicit %r' % (found_explicit,))
 
     sourcecode = get_func_sourcecode(root_func, strip_docstr=True,
-                                        stripdef=True)
+                                        strip_def=True, strip_decor=True)
     sourcecode1 = get_func_sourcecode(root_func, strip_docstr=True,
-                                         stripdef=False)
+                                      strip_def=False, strip_decor=True)
     found_implicit = parse_kwarg_keys(sourcecode1, spec.keywords,
                                          with_vals=True)
     if verbose:
@@ -401,17 +401,17 @@ def get_func_argspec(func):
     return argspec
 
 
-def get_func_sourcecode(func, stripdef=False, stripret=False,
+def get_func_sourcecode(func, strip_def=False, strip_ret=False,
                         strip_docstr=False, strip_comments=False,
-                        remove_linenums=None):
+                        remove_linenums=None, strip_decor=False):
     """
     wrapper around inspect.getsource but takes into account utool decorators
     strip flags are very hacky as of now
 
     Args:
         func (function):
-        stripdef (bool):
-        stripret (bool): (default = False)
+        strip_def (bool):
+        strip_ret (bool): (default = False)
         strip_docstr (bool): (default = False)
         strip_comments (bool): (default = False)
         remove_linenums (None): (default = None)
@@ -419,20 +419,15 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
     Example:
         >>> # build test data
         >>> func = get_func_sourcecode
-        >>> stripdef = True
-        >>> stripret = True
-        >>> sourcecode = get_func_sourcecode(func, stripdef)
+        >>> strip_def = True
+        >>> strip_ret = True
+        >>> sourcecode = get_func_sourcecode(func, strip_def)
         >>> print('sourcecode = {}'.format(sourcecode))
     """
-    #try:
     inspect.linecache.clearcache()  # HACK: fix inspect bug
     sourcefile = inspect.getsourcefile(func)
-    #except IOError:
-    #    sourcefile = None
     if hasattr(func, '_utinfo'):
-        #if 'src' in func._utinfo:
-        #    sourcecode = func._utinfo['src']
-        #else:
+        # DEPRICATE
         func2 = func._utinfo['orig_func']
         sourcecode = get_func_sourcecode(func2)
     elif sourcefile is not None and (sourcefile != '<string>'):
@@ -454,8 +449,9 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
                     raise
     else:
         sourcecode = None
-    if stripdef:
+    if strip_def:
         # hacky
+        # TODO: use redbaron or something like that for a more robust appraoch
         sourcecode = textwrap.dedent(sourcecode)
         regex_decor = '^@.' + REGEX_NONGREEDY
         regex_defline = '^def [^:]*\\):\n'
@@ -466,7 +462,7 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
         sourcecode = textwrap.dedent(nodef_source)
         #print(sourcecode)
         pass
-    if stripret:
+    if strip_ret:
         r""" \s is a whitespace char """
         return_ = named_field('return', 'return .*$')
         prereturn = named_field('prereturn', r'^\s*')
@@ -522,6 +518,16 @@ def get_func_sourcecode(func, stripdef=False, stripret=False,
         #minification.remove_comments(tokens)
         #minification.remove_docstrings(tokens)
         #token_utils.untokenize(tokens)
+
+    if strip_decor:
+        import redbaron
+        red = redbaron.RedBaron(ub.codeblock(sourcecode))
+        if len(red) == 1:
+            redfunc = red[0]
+            if redfunc.type == 'def':
+                # Remove decorators
+                del redfunc.decorators[:]
+                sourcecode = redfunc.dumps()
 
     if remove_linenums is not None:
         source_lines = sourcecode.strip('\n').split('\n')

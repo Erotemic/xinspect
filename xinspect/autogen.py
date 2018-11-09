@@ -82,31 +82,39 @@ class Importables(object):
     def __iter__(self):
         return iter(self.known)
 
-    def _use_erotemics_defaults(self):
+    def _use_recommended_defaults(self):
         """
         Adds a list of default values that I like.
         This should change to be much more configurable.
         """
-        self.known.update({
-            'it': 'import itertools as it',
-            'nh': 'import netharn as nh',
-            'np': 'import numpy as np',
-            'pd': 'import pandas as pd',
-            'ub': 'import ubelt as ub',
-            'Image': 'from PIL import Image',
-            'mpl': 'import matplotlib as mpl',
-            'nn': 'from torch import nn',
-            'F': 'import torch.nn.functional as F',
-            # 'Variable': 'from torch.autograd import Variable',
-        })
+        self._populate_common_modules()
+        self._populate_common_aliases()
+        self._populate_uncommon_aliases()
+        self._populate_os_path()
+
+    def _populate_common_modules(self):
         modules = [
-            'cv2',
-            'glob',
-            'torch',
+            'cv2', 'glob', 'torch', 'math'
         ]
         for name in modules:
             self.known[name] = 'import {}'.format(name)
-        self._populate_os_path()
+
+    def _populate_common_aliases(self):
+        self.known.update({
+            'np': 'import numpy as np',
+            'pd': 'import pandas as pd',
+            'mpl': 'import matplotlib as mpl',
+        })
+
+    def _populate_uncommon_aliases(self):
+        self.known.update({
+            'it': 'import itertools as it',
+            'nn': 'from torch import nn',
+            'F': 'import torch.nn.functional as F',
+            'Image': 'from PIL import Image',
+            'ub': 'import ubelt as ub',
+            'nh': 'import netharn as nh',
+        })
 
     def _populate_os_path(self):
         # Add os.path members to aliased importables
@@ -166,7 +174,7 @@ def autogen_imports(fpath=None, source=None, importable=None,
     # Use predefined
     if importable is None:
         importable = Importables()
-        importable._use_erotemics_defaults()
+        importable._use_recommended_defaults()
 
     importable = Importables(importable)
     if search_modnames:
