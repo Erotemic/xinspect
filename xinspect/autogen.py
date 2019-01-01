@@ -1,6 +1,7 @@
 import os
 import warnings
 import tempfile
+from collections import OrderedDict
 
 
 def undefined_names(fpath=None, source=None):
@@ -68,7 +69,7 @@ class Importables(object):
         # A mapping from undefined names in a file to the appropriate line of
         # Python code that defines that name (usually an import)
         if default is None:
-            default = {}
+            default = OrderedDict()
         elif isinstance(default, Importables):
             default = default.known
         self.known = default
@@ -90,7 +91,7 @@ class Importables(object):
         self._populate_common_modules()
         self._populate_common_aliases()
         self._populate_uncommon_aliases()
-        self._populate_os_path()
+        self._populate_ubiquitous_stdlib_members()
 
     def _populate_common_modules(self):
         modules = [
@@ -116,11 +117,14 @@ class Importables(object):
             'nh': 'import netharn as nh',
         })
 
-    def _populate_os_path(self):
+    def _populate_ubiquitous_stdlib_members(self):
         # Add os.path members to aliased importables
+        import collections
         for name in dir(os.path):
             if not name.startswith('_') and name != 'os':
                 self.known[name] = 'from os.path import {}'.format(name)
+        for key in collections.__all__:
+            self.known[key] = 'from collections import {}'.format(key)
 
     def _populate_existing_modnames(self, names):
         # Populates any name that corresponds to a top-level module
