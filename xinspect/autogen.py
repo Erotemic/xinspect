@@ -1,6 +1,7 @@
 import os
 import warnings
 import tempfile
+import collections
 from collections import OrderedDict
 
 
@@ -70,7 +71,7 @@ class Importables(object):
         # Python code that defines that name (usually an import)
         if default is None:
             default = OrderedDict()
-        elif isinstance(default, Importables):
+        elif isinstance(default, Importables) or hasattr(default, 'known'):
             default = default.known
         self.known = default
 
@@ -119,7 +120,6 @@ class Importables(object):
 
     def _populate_ubiquitous_stdlib_members(self):
         # Add os.path members to aliased importables
-        import collections
         for name in dir(os.path):
             if not name.startswith('_') and name != 'os':
                 self.known[name] = 'from os.path import {}'.format(name)
