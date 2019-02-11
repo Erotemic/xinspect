@@ -126,6 +126,23 @@ class Importables(object):
         for key in collections.__all__:
             self.known[key] = 'from collections import {}'.format(key)
 
+        # Note: not all ctypes members are ubuquitous
+        # ctypes_members = [d for d in dir(ctypes) if not d.startswith('_')]
+        ctypes_members = [
+            'c_bool', 'c_buffer', 'c_byte', 'c_char', 'c_char_p', 'c_double',
+            'c_float', 'c_int', 'c_int16', 'c_int32', 'c_int64', 'c_int8',
+            'c_long', 'c_longdouble', 'c_longlong', 'c_short', 'c_size_t',
+            'c_ssize_t', 'c_ubyte', 'c_uint', 'c_uint16', 'c_uint32',
+            'c_uint64', 'c_uint8', 'c_ulong', 'c_ulonglong', 'c_ushort',
+            'c_void_p', 'c_voidp', 'c_wchar', 'c_wchar_p',
+            'ARRAY', 'BigEndianStructure', 'CDLL', 'CFUNCTYPE', 'DEFAULT_MODE',
+            'LibraryLoader', 'LittleEndianStructure', 'POINTER', 'PYFUNCTYPE',
+            'PyDLL', 'RTLD_GLOBAL', 'RTLD_LOCAL', 'SetPointerType',
+            'addressof', 'byref', 'cast', 'pointer',
+        ]
+        for key in ctypes_members:
+            self.known[key] = 'from ctypes import {}'.format(key)
+
     def _populate_existing_modnames(self, names):
         # Populates any name that corresponds to a top-level module
         from xdoctest import static_analysis as static
