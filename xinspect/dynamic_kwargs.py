@@ -10,6 +10,29 @@ from xinspect.static_kwargs import parse_kwarg_keys
 REGEX_NONGREEDY = '*?'
 
 
+# THIS IS THE CANNONICAL API FUNCTION. TODO: MAKE OTHER PRIVATE
+def get_func_kwargs(func, max_depth=None):
+    """
+    Dynamically parse the kwargs accepted by this function.
+
+    This function uses Python signatures where possible, but it also uses
+    heuristics by inspecting the way any `keywords` dictionary is used.
+
+    Args:
+        func (callable): function to introspect kwargs from
+        max_depth (int, default=None): by default we recursively parse
+            any kwargs passed to subfunctions.
+    """
+    argspec = get_func_argspec(func)
+    if argspec.defaults is None:
+        header_kw = {}
+    else:
+        header_kw = dict(zip(argspec.args[::-1], argspec.defaults[::-1]))
+    if argspec.keywords is not None:
+        header_kw.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
+    return header_kw
+
+
 def bref_field(key):
     """ regex backreference """
     return r'\g<%s>' % (key)
@@ -115,43 +138,21 @@ def lookup_attribute_chain(attrname, namespace):
     return leaf_attr
 
 
-def recursive_parse_kwargs(root_func, path_=None, verbose=None):
+def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
     """
     recursive kwargs parser
-    TODO: rectify with others
-    FIXME: if docstr indentation is off, this fails
 
     Args:
         root_func (function):  live python function
-        path_ (None): (default = None)
+        path_ (PathLike, default=None):
+        max_depth (int, default=None): if specified only recurse to this depth.
 
     Returns:
         list:
 
-    # Example:
-    #     >>> # ENABLE_DOCTEST
-    #     >>> from utool.util_inspect import *  # NOQA
-    #     >>> root_func = iter_module_doctestable
-    #     >>> path_ = None
-    #     >>> result = ub.repr2(recursive_parse_kwargs(root_func), nl=1)
-    #     >>> print(result)
-    #     [
-    #         ('include_funcs', True),
-    #         ('include_classes', True),
-    #         ('include_methods', True),
-    #         ('include_builtin', True),
-    #         ('include_inherited', False),
-    #         ('debug_key', None),
-    #     ]
-
-    # Example:
-    #     >>> # DISABLE_DOCTEST
-    #     >>> from utool.util_inspect import *  # NOQA
-    #     >>> from ibeis.algo.hots import chip_match
-    #     >>> root_func = chip_match.ChipMatch.show_ranked_matches
-    #     >>> path_ = None
-    #     >>> result = ub.repr2(recursive_parse_kwargs(root_func))
-    #     >>> print(result)
+    TODO:
+        - [ ] rectify with others
+        - [ ] if docstr indentation is off, this fails
 
     Example:
         >>> modname = ub.argval('--mod', default='ubelt')
@@ -165,6 +166,9 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
         >>> print('parsed = %s' % (ub.repr2(parsed),))
         >>> print('unique = %s' % (ub.repr2(unique),))
     """
+    if max_depth is None:
+        max_depth = float('inf')
+
     if verbose is None:
         verbose = False
     if verbose:
@@ -252,8 +256,10 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None):
                 print('Unable to find function definition subfunc_name=%r' %
                       (subfunc_name,))
                 subfunc = None
-        if subfunc is not None:
-            subkw_list = recursive_parse_kwargs(subfunc, path_, verbose=verbose)
+        if subfunc is not None and max_depth > 0:
+            subkw_list = recursive_parse_kwargs(subfunc, path_,
+                                                verbose=verbose,
+                                                max_depth=max_depth - 1)
             new_subkw = subkw_list
         else:
             new_subkw = []
@@ -375,17 +381,6 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
         raise
     return child_funcnamess
     #print('child_funcnamess = %r' % (child_funcnamess,))
-
-
-def get_func_kwargs(func, recursive=True):
-    argspec = get_func_argspec(func)
-    if argspec.defaults is None:
-        header_kw = {}
-    else:
-        header_kw = dict(zip(argspec.args[::-1], argspec.defaults[::-1]))
-    if argspec.keywords is not None:
-        header_kw.update(dict(recursive_parse_kwargs(func)))
-    return header_kw
 
 
 def get_func_argspec(func):
