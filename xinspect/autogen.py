@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import warnings
 import tempfile
@@ -154,7 +155,7 @@ class Importables(object):
 
 def autogen_imports(fpath=None, source=None, importable=None,
                     search_modnames=True):
-    r"""
+    """
     Generate lines of code that would fix the undefined names.
 
     This will work out of the box for common aliases (e.g. np) and for names
@@ -163,8 +164,11 @@ def autogen_imports(fpath=None, source=None, importable=None,
 
     Args:
         fpath (PathLike): path to the module in question
+
         source (str): source code of file (mutually exclusive with fpath)
+
         importable (dict | Importables): mapping from names to import lines
+
         search_modnames (bool): if True, searches PYTHONPATH for existing
             modnames that match undefined unknown names.
 
@@ -180,7 +184,7 @@ def autogen_imports(fpath=None, source=None, importable=None,
         >>> print(lines)
         ['import glob', 'from os.path import join', 'import os']
         >>> # After fixing the errors, the file does not need modification
-        >>> newsource = '\n'.join(lines) + '\n' + source
+        >>> newsource = chr(10).join(lines) + chr(10) + source
         >>> newlines = autogen_imports(source=newsource)
         >>> print(newlines)
         []
@@ -211,3 +215,4 @@ def autogen_imports(fpath=None, source=None, importable=None,
 
     import_lines = [importable.known[n] for n in sorted(have_names)]
     return import_lines
+

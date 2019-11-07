@@ -1,3 +1,4 @@
+from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 import inspect
 import re
@@ -515,8 +516,13 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
         #token_utils.untokenize(tokens)
 
     if strip_decor:
-        import redbaron
-        red = redbaron.RedBaron(ub.codeblock(sourcecode))
+        try:
+            import redbaron
+            red = redbaron.RedBaron(ub.codeblock(sourcecode))
+        except Exception:
+            hack_text = ub.ensure_unicode(ub.codeblock(sourcecode)).encode('ascii', 'replace')
+            red = redbaron.RedBaron(hack_text)
+            pass
         if len(red) == 1:
             redfunc = red[0]
             if redfunc.type == 'def':
