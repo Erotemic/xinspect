@@ -154,7 +154,7 @@ class Importables(object):
 
 def autogen_imports(fpath=None, source=None, importable=None,
                     search_modnames=True):
-    """
+    r"""
     Generate lines of code that would fix the undefined names.
 
     This will work out of the box for common aliases (e.g. np) and for names
