@@ -1,0 +1,3 @@
+xdoctest >= 0.3.0
+redbaron >= 0.8
+ubelt >= 0.8.0

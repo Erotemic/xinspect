@@ -1,4 +1,4 @@
-__version__ = '0.0.4'
+__version__ = '0.1.0'
 
 from xinspect import dynamic_kwargs
 from xinspect.dynamic_kwargs import get_func_kwargs
