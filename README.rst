@@ -1,4 +1,4 @@
-|Travis| |Codecov| |Appveyor| |Pypi|
+|CircleCI| |Travis| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 Tools for static and dynamic code introspection.
 
@@ -38,11 +38,17 @@ See Also: https://github.com/Erotemic/xdev
 
   
 
+.. |CircleCI| image:: https://circleci.com/gh/Erotemic/xinspect.svg?style=svg
+    :target: https://circleci.com/gh/Erotemic/xinspect
 .. |Travis| image:: https://img.shields.io/travis/Erotemic/xinspect/master.svg?label=Travis%20CI
-   :target: https://travis-ci.org/Erotemic/xinspect
+   :target: https://travis-ci.org/Erotemic/xinspect?branch=master
+.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/Erotemic/xinspect?branch=master&svg=True
+   :target: https://ci.appveyor.com/projegt/Erotemic/xinspect/branch/master
 .. |Codecov| image:: https://codecov.io/github/Erotemic/xinspect/badge.svg?branch=master&service=github
    :target: https://codecov.io/github/Erotemic/xinspect?branch=master
-.. |Appveyor| image:: https://ci.appveyor.com/api/projects/status/github/Erotemic/xinspect?branch=master&svg=True
-   :target: https://ci.appveyor.com/project/Erotemic/xinspect/branch/master
 .. |Pypi| image:: https://img.shields.io/pypi/v/xinspect.svg
    :target: https://pypi.python.org/pypi/xinspect
+.. |Downloads| image:: https://img.shields.io/pypi/dm/xinspect.svg
+   :target: https://pypistats.org/packages/xinspect
+.. |ReadTheDocs| image:: https://readthedocs.org/projects/xinspect/badge/?version=latest
+    :target: http://xinspect.readthedocs.io/en/latest/
