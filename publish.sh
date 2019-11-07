@@ -66,21 +66,21 @@ else
     GPG_EXECUTABLE=${GPG_EXECUTABLE:=gpg}
 fi
 
-__note___='''
-GPG_IDENTIFIER=Erotemic
-KEYID=$(gpg --list-keys --keyid-format LONG "$GPG_IDENTIFIER" | head -n 2 | tail -n 1 | awk '{print $1}' | tail -c 9)
-echo "KEYID = '$KEYID'"
+#__note___='''
+#GPG_IDENTIFIER=Erotemic
+#KEYID=$(gpg --list-keys --keyid-format LONG "$GPG_IDENTIFIER" | head -n 2 | tail -n 1 | awk '{print $1}' | tail -c 9)
+#echo "KEYID = '$KEYID'"
 
-# https://help.github.com/en/articles/signing-commits
-git config --local commit.gpgsign true
-# Note the GPG key needs to match the email
-git config --local user.email $UserEmail
-# Tell git which key to sign
-git config --local user.signingkey $KEYID
-git config --local -l
+## https://help.github.com/en/articles/signing-commits
+#git config --local commit.gpgsign true
+## Note the GPG key needs to match the email
+#git config --local user.email $UserEmail
+## Tell git which key to sign
+#git config --local user.signingkey $KEYID
+#git config --local -l
 
-GPG_KEYID=297D757
-'''
+#GPG_KEYID=297D757
+#'''
 
 GPG_KEYID=${GPG_KEYID:=$(git config --local user.signingkey)}
 GPG_KEYID=${GPG_KEYID:=$(git config --global user.signingkey)}
