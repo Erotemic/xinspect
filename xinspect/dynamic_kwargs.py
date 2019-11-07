@@ -515,10 +515,8 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
         #token_utils.untokenize(tokens)
 
     if strip_decor:
-        import xdev
-        with xdev.embed_on_exception_context:
-            import redbaron
-            red = redbaron.RedBaron(ub.codeblock(sourcecode))
+        import redbaron
+        red = redbaron.RedBaron(ub.codeblock(sourcecode))
         if len(red) == 1:
             redfunc = red[0]
             if redfunc.type == 'def':
