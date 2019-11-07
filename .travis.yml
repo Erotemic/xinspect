@@ -1,3 +1,7 @@
+global:
+    env:
+        - secure: "h7EUqjKczFT+yyFeTbG4akHP3kzrYlbIyeXBszIzoPQv0WkK4JRAE0wEXIQbXQ+5IqkWaNFN5N8ocj4GB4R7B1wJ+pGfW0qyb4kOEGTQDFPfcc/K6mut9XfIHNVt31ojbDFxTg6P2BGFBObyFwv5cPrito+0MKLUAtCSA9jL4FFPgqrj78w254JMBc/z5a46SfIxtqK7PGUW78HTcDB7kxMSIfmQVtRbyj/oU5KxwQUXuW7yiiShy6PkoqTRzMKyFpDwpr4JNTdSTDYSl/uARdnbYL8g6RIUTBq/R3q6FzSejD3kzkbTqLrNkXA0xJQNWoDPAhOQAxVNpFkUnSztdCEs7HLhTF31QQ2Q06yPHVXqlPFFqmkbnaB5PnSf0pIaPjZy2+P7Fwv8ji3cax5pMbRD+bY0aBR7nWELpaoEeqoJNoXSvaP2QZJUwapmdatg3NkRnXcWHeAgS+d26WcAgWG1RHZGsc3ggxLb6zQfhY0gDGd++JmaQSJPnYEusMIencT45M5Nhqb41k9Pf94YnezwPKc8x/EY2IwxloMcNMFb1uot5RgI1TrK3TnV3qYr9dv7eUgTekfx03hNKHTdPgQdsT3zWFgfQgYTgoQPoGhT/yI9XKNWr8NuwswYk1HVdai9xujWvB/7q7r6jGrbXMGw+xc+kav0eJ1DXzICEdU="
+        - secure: "ixTItUqS1B+ckKHprwO/5x6cPGCGV/dZbamtbAdBG4kfmMvqBSI5p7TEBhWoiDaL4Y5LZ3jqLZzPDAFBOiT4qsxLu1z6+DDzdfRAj4aEV9paf6GQA+tGZ3Hr+q/hR5yvTCK37aq2eyMIopUS7aDffimLxEEA/4AKK4tOImC+XkOp9qUcQbS6OFJpSbIodvB5PMldpGnc/BG5Hca382mAkwvAeb61ntnJbVBMnR58mg/rwJiX0uXkkG+JpgR2Z5zUai6I62q/6y3Uin4FO65+cqa36+nrPtg9zOSlGhrm8YdzW0ooiGwUcl1tAh4ufoeC0+ZQazH2aNNgViWJYE7zorA2LRJYtWSO+5TUHZ7QVzSHOFLy8Rvl1q0SvPjQU9LQl3SOCu/NSDOKYg37w27h6l+jZMxgjcmAEHOYAv2SFTS/eo6Sdrq+KijudbxnCvFlV30fJ85V9aYN0cnXWMS30WeW0vfGLmjtyIsF+9DLfd7MbWXVoPuPX155NWJ2VLmL6d3Yn8wjlpdWsanF+W9an/2lhrIRFPRDvXteaLSiH8TGrijJQpUHftNk9j5noSEi5dC2bi/gnCgJmxKGQbaf0AfuLbD3W4+D2Ogfz0TU854DgzD7O+Znq0SIaFePXTqD0DJSTWKehLQg4r94IixpAB+J1woBYd+t//Au5dRdPLo="
 language: python
 sudo: false
 
@@ -21,11 +25,82 @@ script:
   #- travis_wait ./run_tests.py
   #- travis_wait python run_tests.py
   - travis_wait pytest -p no:doctest --cov-config .coveragerc --cov-report html --xdoctest --cov=xinspect --network xinspect
+
 after_success: 
-  #- coveralls || echo "Coveralls upload failed"
-  - codecov 
-#after_failure: 
-#  - cat failed_doctests.txt
+    - codecov 
+    - gpg --version
+    - gpg2 --version
+    - export GPG_EXECUTABLE=gpg2
+    - openssl version
+    - | 
+        __heredoc__='''
+        # Load or generate secrets
+        source $(secret_loader.sh)
+        echo $TRAVIS_SECRET
+
+        # encrypt relevant travis variables
+        travis encrypt TRAVIS_SECRET=$TRAVIS_SECRET
+        travis encrypt TWINE_PASSWORD=$TWINE_PASSWORD  
+        travis encrypt TWINE_USERNAME=$TWINE_USERNAME 
+
+        # HOW TO ENCRYPT YOUR SECRET GPG KEY
+        IDENTIFIER="travis-ci-Erotemic"
+        KEYID=$(gpg --list-keys --keyid-format LONG "$IDENTIFIER" | head -n 2 | tail -n 1 | awk '{print $1}' | tail -c 9)
+        echo "KEYID = $KEYID"
+
+        # Export plaintext gpg public keys, private keys, and trust info
+        mkdir -p dev
+        gpg --armor --export-secret-keys $KEYID > dev/travis_secret_gpg_key.pgp
+        gpg --armor --export $KEYID > dev/travis_public_gpg_key.pgp
+        gpg --export-ownertrust > dev/gpg_owner_trust
+
+        # Encrypt gpg keys and trust with travis secret
+        TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -e -a -in dev/travis_public_gpg_key.pgp > dev/travis_public_gpg_key.pgp.enc
+        TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -e -a -in dev/travis_secret_gpg_key.pgp > dev/travis_secret_gpg_key.pgp.enc
+        TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -e -a -in dev/gpg_owner_trust > dev/gpg_owner_trust.enc
+
+        source $(secret_unloader.sh)
+
+        # Look at what we did, clean up, and add it to git
+        ls dev/*.enc
+        rm dev/gpg_owner_trust dev/*.pgp
+        git status
+        git add dev/*.enc
+
+        '''  # <hack vim "regex" parser> '
+    # Decrypt and import GPG Keys / trust
+    - $GPG_EXECUTABLE --version
+    - openssl version
+    - $GPG_EXECUTABLE --list-keys
+    - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/travis_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
+    - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/travis_secret_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
+    - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust
+    - $GPG_EXECUTABLE --list-keys
+    - |
+        pip install twine
+        if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+          pip install six pyopenssl ndg-httpsclient pyasn1 -U --user
+          pip install requests[security] twine --user
+        elfi
+        if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+          pip install six twine
+          pip install --upgrade pyOpenSSL
+        fi
+    # Package and publish to pypi (if on release)
+    - |
+        echo "TRAVIS_BRANCH = $TRAVIS_BRANCH"
+        if [[ "$TRAVIS_BRANCH" == "release" ]]; then
+            # use set +x to log all intermediate commands 
+            set +x
+            export CURRENT_BRANCH=$TRAVIS_BRANCH
+            # TODO: reliable and secure gpg keys
+            # Relies on a specific environmenmt being available 
+            GPG_KEYID=D297D757 TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=yes ./publish.sh
+            set -x
+        else
+            GPG_KEYID=D297D757 TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=no ./publish.sh
+        fi
+
 cache: 
     apt: true
     directories:
