@@ -1,7 +1,11 @@
 global:
     env:
-        - secure: "h7EUqjKczFT+yyFeTbG4akHP3kzrYlbIyeXBszIzoPQv0WkK4JRAE0wEXIQbXQ+5IqkWaNFN5N8ocj4GB4R7B1wJ+pGfW0qyb4kOEGTQDFPfcc/K6mut9XfIHNVt31ojbDFxTg6P2BGFBObyFwv5cPrito+0MKLUAtCSA9jL4FFPgqrj78w254JMBc/z5a46SfIxtqK7PGUW78HTcDB7kxMSIfmQVtRbyj/oU5KxwQUXuW7yiiShy6PkoqTRzMKyFpDwpr4JNTdSTDYSl/uARdnbYL8g6RIUTBq/R3q6FzSejD3kzkbTqLrNkXA0xJQNWoDPAhOQAxVNpFkUnSztdCEs7HLhTF31QQ2Q06yPHVXqlPFFqmkbnaB5PnSf0pIaPjZy2+P7Fwv8ji3cax5pMbRD+bY0aBR7nWELpaoEeqoJNoXSvaP2QZJUwapmdatg3NkRnXcWHeAgS+d26WcAgWG1RHZGsc3ggxLb6zQfhY0gDGd++JmaQSJPnYEusMIencT45M5Nhqb41k9Pf94YnezwPKc8x/EY2IwxloMcNMFb1uot5RgI1TrK3TnV3qYr9dv7eUgTekfx03hNKHTdPgQdsT3zWFgfQgYTgoQPoGhT/yI9XKNWr8NuwswYk1HVdai9xujWvB/7q7r6jGrbXMGw+xc+kav0eJ1DXzICEdU="
-        - secure: "ixTItUqS1B+ckKHprwO/5x6cPGCGV/dZbamtbAdBG4kfmMvqBSI5p7TEBhWoiDaL4Y5LZ3jqLZzPDAFBOiT4qsxLu1z6+DDzdfRAj4aEV9paf6GQA+tGZ3Hr+q/hR5yvTCK37aq2eyMIopUS7aDffimLxEEA/4AKK4tOImC+XkOp9qUcQbS6OFJpSbIodvB5PMldpGnc/BG5Hca382mAkwvAeb61ntnJbVBMnR58mg/rwJiX0uXkkG+JpgR2Z5zUai6I62q/6y3Uin4FO65+cqa36+nrPtg9zOSlGhrm8YdzW0ooiGwUcl1tAh4ufoeC0+ZQazH2aNNgViWJYE7zorA2LRJYtWSO+5TUHZ7QVzSHOFLy8Rvl1q0SvPjQU9LQl3SOCu/NSDOKYg37w27h6l+jZMxgjcmAEHOYAv2SFTS/eo6Sdrq+KijudbxnCvFlV30fJ85V9aYN0cnXWMS30WeW0vfGLmjtyIsF+9DLfd7MbWXVoPuPX155NWJ2VLmL6d3Yn8wjlpdWsanF+W9an/2lhrIRFPRDvXteaLSiH8TGrijJQpUHftNk9j5noSEi5dC2bi/gnCgJmxKGQbaf0AfuLbD3W4+D2Ogfz0TU854DgzD7O+Znq0SIaFePXTqD0DJSTWKehLQg4r94IixpAB+J1woBYd+t//Au5dRdPLo="
+        - secure: "MxfwGJxfxWPHHk4qNwNyaK9YXRLdW0sV3ct5b3dZ3kDoV6uKWC5Xq7tZkG96v4GQwnajJdKBHXFHDVJwDSKwUBEI8ZOdRFAgG73/FHjo8OU01y42EuAlBoKqJhO+uHY6nybipQuNfbLOeuH8/qufF/rpL9S59ZajbV5ZONdODDmgUCafah1tOyZpixwM09380kJVh99iAAfsZ9rNDHOzOmFED1KZ9y0k4G08dvlR3+WYNnJZyyUnLHMC1fXa3ekgEw5zGCxCE8hT8QC24D/nEVUKrB08nwq7AkoKeeGqNznF9bTcEdhap5ntK6oubNeI2UxZWdJJ1lrFeMRNplPfB6swsjd6uxNysZqQdzvS6N6DLCDSZ4MJaShv+jkP3FpQeiC5dTN36+DU+j27ccFlOkSxz7ivv+rYyEMesDIb5J8OZB/oEuoAby8zStZ7v4BVZJMK+RGACdlqw66a6oYh7uFV4Ba2uUq6SlSlBwAuB1tPBEz92SxlsP9CMSSVWjoW8KD2UpA0mMmY0W6YRataxAnkx37YZf3h1FeZwmYS9WMgEDWrBwqH3rHP/njwNJRLMsdTk3nTWGkKwiwzfOeel4znZNQYmU2/kWXiNY6c+zRRXR+Q3xCpAKGUM4l9sNzaDWWptQY1poZIl3SJFAimCK1ELR5YNN/ECyOquPvOwZA="
+
+        - secure: "FLjyol33MBBMDXzjM5/mYZP+VOl3OYF3L4USUJ3Tnkp0JjUzcgi34frPlvoyDokqJFvui0B7luaSYpbKZ4MLZGOpZc+L9a3cvagohpWBulHtN0o/YZa9W4LXofsDgSWr0S1C/UrguKMpaYoIguDTPXeMcCAqYiu/nIixhD4BWZKnk9/YDBxJQZvoEaJTuVh//X6IWLUGIEyYfKU+7UP+aRLXpn1JBPuk+DUtkr81udjqJsmJsAlUZBe8GICAvfoF5GvVTDtO2zbWSZoJkLDH905c/ONTTsTy7PqgEjoOd22toFT1SPYvnptBG3LEHTqpdnXzRUyBEVjmnMeqMfq4PvxaGQGMwVizsDqks/88uXVdUEiYVZkg+uTv7xV7etiDKQRsYEvNXM9R6XLDwikIpbYYiRzGYdAydECwW49ukDdO1kzwmZ3eptsrWyYhte7haP1kl6JBWe8cZjlNzVaoljm11PJILPGRUReH942Uk2exHl3q+K3yrXFbjcOarSV8UnvLuQc4xkntCptm3ieERx2Ce57CBktpUelH/LcE9r6fxBTNTdmTqQ3xUzLeUVxiInjLvbQ7y4HC7Rtvswh0xjv+hB5Acj/NOgxo1QOeVA6f76oYs4OEgFbePrmph364O0r2G84M3PBFb+bYmgIDn8vJ6woO7e1GeD6T8cCWs3I="
+
+        - secure: "SbAKyeQP2i894ozkam8QzTmU8u7bDkKdEiant/RfoO2iV72em8boIBLk19yL9GVpGxTEomMflpd5LQIgVaDIClWGSWd+VOiFuyOaf+WBgw1N1DLiRQNTSQTrjazLwubhOg/6+ur4d7T7wfChWPixXXRxpfg5JBPfYbmhU3tO8nf/dEcmLhHuI8Ln8JEqRcnM2qM2H5D/FZvMGDqXyZNhbju8XdvE3OEGzJznP+pUiXZ0lhbpjToXTCPUMo3RrxrTkxYJsX/nQiD25FPXLV9FOLQCWRKrynbEwwprpgQTGZ8kMx3ugh6KMGrfkMC1Y5FrDsORvw7QTxIJo0HgE9/d+x5MOr2Z+cedhhCg4oJIi40C/jQE/80vxUylgxqDOQjZq1MxBiRiXBOnGtNJr60vBH7XduIUcYVI/Z0iPVOWLuXKTaiGsgI5HJWXL8eE8HEW4Ah0kPCqGmrCuQTiCZl5Znm1ibcp1Fls4Ar5Qvldg/oKS+ADyQa5Zt1QU39MU4Ep/xXhQ7/l85V1fKoR0Y/HSADDzTN6fETnhpHLuLIKcrHHFqRAkRjeztn7AYxSygwxXUSTu7aI+/2C53fJQKunozkDsIwturi+GnoXb8zVZgIQo/83jFMY09luBPLMmaoKnSsy1Vv1HP1w8aH9EQOcm66Gj+VslpToTuyacTZPL0A="
+
 language: python
 sudo: false
 
@@ -36,6 +40,7 @@ after_success:
         # Load or generate secrets
         source $(secret_loader.sh)
         echo $TRAVIS_SECRET
+        echo $TWINE_USERNAME
 
         # encrypt relevant travis variables
         travis encrypt TRAVIS_SECRET=$TRAVIS_SECRET
@@ -71,8 +76,8 @@ after_success:
     - $GPG_EXECUTABLE --version
     - openssl version
     - $GPG_EXECUTABLE --list-keys
-    - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/travis_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
     - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/travis_secret_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
+    - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/travis_public_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
     - TSP=$TRAVIS_SECRET openssl enc -aes-256-cbc -md MD5 -pass env:TSP -d -a -in dev/gpg_owner_trust.enc | $GPG_EXECUTABLE --import-ownertrust
     - $GPG_EXECUTABLE --list-keys
     - |
@@ -94,10 +99,10 @@ after_success:
             export CURRENT_BRANCH=$TRAVIS_BRANCH
             # TODO: reliable and secure gpg keys
             # Relies on a specific environmenmt being available 
-            GPG_KEYID=D297D757 TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=yes ./publish.sh
+            GPG_KEYID=D297D757 CURRENT_BRANCH=$TRAVIS_BRANCH TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=yes ./publish.sh
             set -x
         else
-            GPG_KEYID=D297D757 TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=no ./publish.sh
+            GPG_KEYID=D297D757 CURRENT_BRANCH=$TRAVIS_BRANCH TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE USE_GPG=True DEPLOY_BRANCH=release TAG_AND_UPLOAD=no ./publish.sh
         fi
 
 cache: 
