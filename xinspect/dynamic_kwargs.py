@@ -389,6 +389,7 @@ def get_func_argspec(func):
     wrapper around inspect.getargspec but takes into account utool decorators
     """
     if hasattr(func, '_utinfo'):
+        # DEPRICATE THIS PART
         argspec = func._utinfo['orig_argspec']
         return argspec
     if isinstance(func, property):
