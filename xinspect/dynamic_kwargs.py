@@ -436,7 +436,7 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
                 if not isinstance(sourcecode, six.text_type):
                     sourcecode = sourcecode.decode('utf-8')
                 #print(sourcecode)
-            except (IndexError, OSError, SyntaxError) as ex:
+            except (IndexError, OSError, SyntaxError):
                 print('WARNING: Error getting source')
                 inspect.linecache.clearcache()
                 if num_tries + 1 != try_limit:
