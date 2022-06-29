@@ -215,4 +215,3 @@ def autogen_imports(fpath=None, source=None, importable=None,
 
     import_lines = [importable.known[n] for n in sorted(have_names)]
     return import_lines
-
