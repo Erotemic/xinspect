@@ -173,16 +173,19 @@ def autogen_imports(fpath=None, source=None, importable=None,
             modnames that match undefined unknown names.
 
     Example:
+        >>> from xinspect.autogen import *  # NOQA
         >>> import ubelt as ub
         >>> source = ub.codeblock(
         >>>     '''
         >>>     p = os.path.dirname(join('a', 'b'))
+        >>>     p = os.path.dirname(join('a', 'b'))
         >>>     glob.glob(p)
+        >>>     print(antigravity)
         >>>     ''')
         >>> # Generate a list of lines to fix the name errors
         >>> lines = autogen_imports(source=source)
         >>> print(lines)
-        ['import glob', 'from os.path import join', 'import os']
+        ['import antigravity', 'import glob', 'from os.path import join', 'import os']
         >>> # After fixing the errors, the file does not need modification
         >>> newsource = chr(10).join(lines) + chr(10) + source
         >>> newlines = autogen_imports(source=newsource)
