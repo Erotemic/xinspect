@@ -23,15 +23,35 @@ def get_func_kwargs(func, max_depth=None):
         func (callable): function to introspect kwargs from
         max_depth (int, default=None): by default we recursively parse
             any kwargs passed to subfunctions.
+
+    Example:
+        >>> from xinspect.dynamic_kwargs import get_func_kwargs
+        >>> parsed_kwargs = get_func_kwargs(get_func_kwargs)
+        >>> assert parsed_kwargs == {'max_depth': None}
     """
-    argspec = get_func_argspec(func)
-    if argspec.defaults is None:
-        header_kw = {}
+    if 1:
+        # NEW SIG BASED
+        import inspect
+        sig = inspect.signature(func)
+        has_kwargs = False
+        parsed_kwargs = {}
+        for arg in sig.parameters.values():
+            if arg.kind != inspect.Parameter.POSITIONAL_ONLY:
+                if arg.default is not inspect._empty:
+                    parsed_kwargs[arg.name] = arg.default
+            if arg.kind == inspect.Parameter.VAR_KEYWORD:
+                has_kwargs = True
+        if has_kwargs:
+            parsed_kwargs.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
     else:
-        header_kw = dict(zip(argspec.args[::-1], argspec.defaults[::-1]))
-    if argspec.keywords is not None:
-        header_kw.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
-    return header_kw
+        argspec = get_func_argspec(func)
+        if argspec.defaults is None:
+            parsed_kwargs = {}
+        else:
+            parsed_kwargs = dict(zip(argspec.args[::-1], argspec.defaults[::-1]))
+        if argspec.keywords is not None:
+            parsed_kwargs.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
+    return parsed_kwargs
 
 
 def bref_field(key):
@@ -394,6 +414,7 @@ def get_func_argspec(func):
         return argspec
     if isinstance(func, property):
         func = func.fget
+
     argspec = inspect.getargspec(func)
     return argspec
 

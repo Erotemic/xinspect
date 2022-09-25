@@ -1,2 +1,2 @@
 #!/bin/bash
-xdoctest xinspect --style=google all
+xdoctest xinspect --style=google all "$@"
