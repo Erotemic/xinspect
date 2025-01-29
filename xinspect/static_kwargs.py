@@ -1,4 +1,3 @@
-import six
 import ast
 
 
@@ -90,13 +89,10 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
             if debug:
                 print('VISIT FunctionDef node = %r' % (node,))
                 # print('node.args.kwarg = %r' % (node.args.kwarg,))
-            if six.PY2:
-                kwarg_name = node.args.kwarg
+            if node.args.kwarg is None:
+                kwarg_name = None
             else:
-                if node.args.kwarg is None:
-                    kwarg_name = None
-                else:
-                    kwarg_name = node.args.kwarg.arg
+                kwarg_name = node.args.kwarg.arg
 
             # Record any constants defined in function definitions
             defaults_vals = node.args.defaults
@@ -104,14 +100,9 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
             default_keys = node.args.args[offset:]
             for kwname, kwval in zip(default_keys, defaults_vals):
                 # try:
-                if six.PY2:
-                    if isinstance(kwval, ast.Name):
-                        val = eval(kwval.id, {}, {})
-                        self.const_lookup[kwname.id] = val
-                else:
-                    if isinstance(kwval, ast.NameConstant):
-                        val = kwval.value
-                        self.const_lookup[kwname.arg] = val
+                if isinstance(kwval, ast.NameConstant):
+                    val = kwval.value
+                    self.const_lookup[kwname.arg] = val
                 # except Exception:
                 #     pass
 
@@ -180,7 +171,7 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
                                     # val_value = 'TODO lookup const'
                                     # TODO: lookup constants?
                                     pass
-                            elif six.PY3:
+                            else:
                                 if isinstance(val, ast.NameConstant):
                                     val_value = val.value
                                 elif isinstance(val, ast.Call):

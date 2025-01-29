@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-import six
 import inspect
 import re
 import types
@@ -81,10 +79,7 @@ def is_func_or_method(var):
 
 
 def get_funcglobals(func):
-    if six.PY2:
-        return getattr(func, 'func_globals')
-    else:
-        return getattr(func, '__globals__')
+    return getattr(func, '__globals__')
 
 
 def parse_func_kwarg_keys(func, with_vals=False):
@@ -149,7 +144,6 @@ def lookup_attribute_chain(attrname, namespace):
         >>> namespace = mod.__dict__
         >>> attrname = 'KWReg.print_defaultkw'
     """
-    #subdict = meta_util_six.get_funcglobals(root_func)
     subtup = attrname.split('.')
     subdict = namespace
     for attr in subtup[:-1]:
@@ -352,13 +346,10 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
             if debug:
                 print('\nVISIT FunctionDef node = %r' % (node,))
                 print('node.args.kwarg = %r' % (node.args.kwarg,))
-            if six.PY2:
-                kwarg_name = node.args.kwarg
+            if node.args.kwarg is None:
+                kwarg_name = None
             else:
-                if node.args.kwarg is None:
-                    kwarg_name = None
-                else:
-                    kwarg_name = node.args.kwarg.arg
+                kwarg_name = node.args.kwarg.arg
             if kwarg_name != target_kwargs_name:
                 # target kwargs is still in scope
                 ast.NodeVisitor.generic_visit(self, node)
@@ -376,25 +367,16 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
             else:
                 raise NotImplementedError(
                     'do not know how to parse: node.func = %r' % (node.func,))
-            if six.PY2:
-                kwargs = node.kwargs
-                kwargs_name = None if kwargs is None else kwargs.id
-                if funcname is not None and kwargs_name == target_kwargs_name:
-                    child_funcnamess.append(funcname)
-                if debug:
-                    print('funcname = %r' % (funcname,))
-                    print('kwargs_name = %r' % (kwargs_name,))
-            else:
-                if node.keywords:
-                    for kwargs in node.keywords:
-                        if kwargs.arg is None:
-                            if hasattr(kwargs.value, 'id'):
-                                kwargs_name = kwargs.value.id
-                                if funcname is not None and kwargs_name == target_kwargs_name:
-                                    child_funcnamess.append(funcname)
-                                if debug:
-                                    print('funcname = %r' % (funcname,))
-                                    print('kwargs_name = %r' % (kwargs_name,))
+            if node.keywords:
+                for kwargs in node.keywords:
+                    if kwargs.arg is None:
+                        if hasattr(kwargs.value, 'id'):
+                            kwargs_name = kwargs.value.id
+                            if funcname is not None and kwargs_name == target_kwargs_name:
+                                child_funcnamess.append(funcname)
+                            if debug:
+                                print('funcname = %r' % (funcname,))
+                                print('kwargs_name = %r' % (kwargs_name,))
             ast.NodeVisitor.generic_visit(self, node)
     try:
         KwargParseVisitor().visit(pt)
@@ -454,7 +436,7 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
             try:
                 #print(func)
                 sourcecode = inspect.getsource(func)
-                if not isinstance(sourcecode, six.text_type):
+                if not isinstance(sourcecode, str):
                     sourcecode = sourcecode.decode('utf-8')
                 #print(sourcecode)
             except (IndexError, OSError, SyntaxError):
@@ -500,7 +482,7 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
             TODO: commit clean version to pyminifier
             """
             import tokenize
-            from six.moves import StringIO
+            from io import StringIO
             io_obj = StringIO(source)
             out = ''
             prev_toktype = tokenize.INDENT

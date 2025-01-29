@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import warnings
 import tempfile
@@ -63,7 +62,7 @@ def undefined_names(fpath=None, source=None):
     return names
 
 
-class Importables(object):
+class Importables:
     """
     Class that keeps track of registered known importables
     """
