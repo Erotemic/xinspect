@@ -45,16 +45,12 @@ def undefined_names(fpath=None, source=None):
             reporter.messages.append(message)
 
     # TODO: use code transformer to remove import * by default
-
-    if source is not None:
-        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.py')
-        tmp.file.write(source)
-        tmp.file.flush()
-        fpath = tmp.name
-
     names = set()
     reporter = CaptureReporter(None, None)
-    pyflakes.api.checkPath(fpath, reporter)
+    if source is not None:
+        pyflakes.api.check(source, '_.py', reporter)
+    else:
+        pyflakes.api.checkPath(fpath, reporter)
     for msg in reporter.messages:
         if msg.__class__.__name__.endswith('UndefinedName'):
             assert len(msg.message_args) == 1
