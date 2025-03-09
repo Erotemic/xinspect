@@ -1,4 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import warnings
 import tempfile
@@ -46,16 +45,12 @@ def undefined_names(fpath=None, source=None):
             reporter.messages.append(message)
 
     # TODO: use code transformer to remove import * by default
-
-    if source is not None:
-        tmp = tempfile.NamedTemporaryFile(mode='w', suffix='.py')
-        tmp.file.write(source)
-        tmp.file.flush()
-        fpath = tmp.name
-
     names = set()
     reporter = CaptureReporter(None, None)
-    pyflakes.api.checkPath(fpath, reporter)
+    if source is not None:
+        pyflakes.api.check(source, '_.py', reporter)
+    else:
+        pyflakes.api.checkPath(fpath, reporter)
     for msg in reporter.messages:
         if msg.__class__.__name__.endswith('UndefinedName'):
             assert len(msg.message_args) == 1
@@ -63,7 +58,7 @@ def undefined_names(fpath=None, source=None):
     return names
 
 
-class Importables(object):
+class Importables:
     """
     Class that keeps track of registered known importables
     """
@@ -173,16 +168,19 @@ def autogen_imports(fpath=None, source=None, importable=None,
             modnames that match undefined unknown names.
 
     Example:
+        >>> from xinspect.autogen import *  # NOQA
         >>> import ubelt as ub
         >>> source = ub.codeblock(
         >>>     '''
         >>>     p = os.path.dirname(join('a', 'b'))
+        >>>     p = os.path.dirname(join('a', 'b'))
         >>>     glob.glob(p)
+        >>>     print(antigravity)
         >>>     ''')
         >>> # Generate a list of lines to fix the name errors
         >>> lines = autogen_imports(source=source)
         >>> print(lines)
-        ['import glob', 'from os.path import join', 'import os']
+        ['import antigravity', 'import glob', 'from os.path import join', 'import os']
         >>> # After fixing the errors, the file does not need modification
         >>> newsource = chr(10).join(lines) + chr(10) + source
         >>> newlines = autogen_imports(source=newsource)
@@ -215,4 +213,3 @@ def autogen_imports(fpath=None, source=None, importable=None,
 
     import_lines = [importable.known[n] for n in sorted(have_names)]
     return import_lines
-

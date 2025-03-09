@@ -1,5 +1,12 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-import six
+"""
+Ignore:
+    from xinspect.dynamic_kwargs import *  # NOQA
+    import liberator
+    lib = liberator.Liberator()
+    lib.add_dynamic(get_func_kwargs)
+    lib.expand(['xinspect'])
+    print(lib.current_sourcecode())
+"""
 import inspect
 import re
 import types
@@ -23,15 +30,26 @@ def get_func_kwargs(func, max_depth=None):
         func (callable): function to introspect kwargs from
         max_depth (int, default=None): by default we recursively parse
             any kwargs passed to subfunctions.
+
+    Example:
+        >>> from xinspect.dynamic_kwargs import get_func_kwargs
+        >>> parsed_kwargs = get_func_kwargs(get_func_kwargs)
+        >>> assert parsed_kwargs == {'max_depth': None}
     """
-    argspec = get_func_argspec(func)
-    if argspec.defaults is None:
-        header_kw = {}
-    else:
-        header_kw = dict(zip(argspec.args[::-1], argspec.defaults[::-1]))
-    if argspec.keywords is not None:
-        header_kw.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
-    return header_kw
+    # NEW SIG BASED
+    import inspect
+    sig = inspect.signature(func)
+    has_kwargs = False
+    parsed_kwargs = {}
+    for arg in sig.parameters.values():
+        if arg.kind != inspect.Parameter.POSITIONAL_ONLY:
+            if arg.default is not inspect._empty:
+                parsed_kwargs[arg.name] = arg.default
+        if arg.kind == inspect.Parameter.VAR_KEYWORD:
+            has_kwargs = True
+    if has_kwargs:
+        parsed_kwargs.update(dict(recursive_parse_kwargs(func, max_depth=max_depth)))
+    return parsed_kwargs
 
 
 def bref_field(key):
@@ -61,10 +79,7 @@ def is_func_or_method(var):
 
 
 def get_funcglobals(func):
-    if six.PY2:
-        return getattr(func, 'func_globals')
-    else:
-        return getattr(func, '__globals__')
+    return getattr(func, '__globals__')
 
 
 def parse_func_kwarg_keys(func, with_vals=False):
@@ -92,44 +107,58 @@ def get_kwdefaults(func, parse_source=False):
 
     Returns:
         dict:
-
-    # CommandLine:
-    #     python -m utool.util_inspect get_kwdefaults
-
-    # Example:
-    #     >>> # ENABLE_DOCTEST
-    #     >>> from utool.util_inspect import *  # NOQA
-    #     >>> func = dummy_func
-    #     >>> parse_source = True
-    #     >>> kwdefaults = get_kwdefaults(func, parse_source)
-    #     >>> print('kwdefaults = %s' % (ub.repr2(kwdefaults),))
     """
-    argspec = inspect.getargspec(func)
-    kwdefaults = {}
-    if argspec.args is None or argspec.defaults is None:
-        pass
+    if 0:
+        # OLD
+        argspec = inspect.getargspec(func)
+        kwdefaults = {}
+        if argspec.args is None or argspec.defaults is None:
+            pass
+        else:
+            args = argspec.args
+            defaults = argspec.defaults
+            #kwdefaults = OrderedDict(zip(argspec.args[::-1], argspec.defaults[::-1]))
+            kwpos = len(args) - len(defaults)
+            kwdefaults = ub.odict(zip(args[kwpos:], defaults))
+        if parse_source and argspec.keywords:
+            # TODO parse for kwargs.get/pop
+            keyword_defaults = parse_func_kwarg_keys(func, with_vals=True)
+            for key, val in keyword_defaults:
+                assert key not in kwdefaults, 'parsing error'
+                kwdefaults[key] = val
+
     else:
-        args = argspec.args
-        defaults = argspec.defaults
-        #kwdefaults = OrderedDict(zip(argspec.args[::-1], argspec.defaults[::-1]))
-        kwpos = len(args) - len(defaults)
-        kwdefaults = ub.odict(zip(args[kwpos:], defaults))
-    if parse_source and argspec.keywords:
-        # TODO parse for kwargs.get/pop
-        keyword_defaults = parse_func_kwarg_keys(func, with_vals=True)
-        for key, val in keyword_defaults:
-            assert key not in kwdefaults, 'parsing error'
-            kwdefaults[key] = val
+        # NEW
+        signature = inspect.signature(func)
+        kwdefaults = {}
+
+        # Iterate over the parameters in the signature
+        parameters = signature.parameters
+        # Separate positional arguments and keyword arguments
+        args = [param for param in parameters.values() if param.default == inspect.Parameter.empty]
+        defaults = [param for param in parameters.values() if param.default != inspect.Parameter.empty]
+
+        if defaults:
+            # Calculate position of keyword arguments
+            kwpos = len(args)
+            kwdefaults = ub.odict((param.name, param.default) for param in defaults)
+
+        if parse_source and 'kwargs' in parameters:
+            # TODO: Implement parsing logic for kwargs
+            keyword_defaults = parse_func_kwarg_keys(func, with_vals=True)
+            for key, val in keyword_defaults:
+                assert key not in kwdefaults, 'Parsing error: duplicate key'
+                kwdefaults[key] = val
     return kwdefaults
 
 
 def lookup_attribute_chain(attrname, namespace):
     """
+    Ignore:
         >>> attrname = funcname
         >>> namespace = mod.__dict__
         >>> attrname = 'KWReg.print_defaultkw'
     """
-    #subdict = meta_util_six.get_funcglobals(root_func)
     subtup = attrname.split('.')
     subdict = namespace
     for attr in subtup[:-1]:
@@ -137,6 +166,17 @@ def lookup_attribute_chain(attrname, namespace):
     leaf_name = subtup[-1]
     leaf_attr = subdict[leaf_name]
     return leaf_attr
+
+
+def get_func_signature(func):
+    """
+    wrapper around inspect.getargspec but takes into account utool decorators
+    """
+    if isinstance(func, property):
+        func = func.fget
+
+    signature = inspect.signature(func)
+    return signature
 
 
 def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
@@ -182,7 +222,7 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
             print('[inspect] Encountered cycle. returning')
         return []
     path_.append(root_func)
-    spec = get_func_argspec(root_func)
+    signature = get_func_signature(root_func)
     # ADD MORE
     kwargs_list = []
     found_explicit = list(get_kwdefaults(root_func, parse_source=False).items())
@@ -193,8 +233,8 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
                                         strip_def=True, strip_decor=True)
     sourcecode1 = get_func_sourcecode(root_func, strip_docstr=True,
                                       strip_def=False, strip_decor=True)
-    found_implicit = parse_kwarg_keys(sourcecode1, spec.keywords,
-                                         with_vals=True)
+    found_implicit = parse_kwarg_keys(sourcecode1, signature.parameters, with_vals=True)
+
     if verbose:
         print('[inspect] * Found found_implicit %r' % (found_implicit,))
     kwargs_list = found_explicit + found_implicit
@@ -205,12 +245,6 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
         # look it up.  Maybe args, or returns can help infer type.  Maybe just
         # register some known varnames.  Maybe jedi has some better way to do
         # this.
-        # if attr == 'ut':
-        #     subdict = ut.__dict__
-        # elif attr == 'pt':
-        #     import plottool as pt
-        #     subdict = pt.__dict__
-        # else:
         subdict = None
         return subdict
 
@@ -231,7 +265,7 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
                     subdict = subdict[attr].__dict__
                 except (KeyError, TypeError):
                     # limited support for class lookup
-                    if isinstance(root_func, (types.MethodType,)) and spec.args[0] == attr:
+                    if isinstance(root_func, (types.MethodType,)) and signature.parameters['self'].name == attr:
                         subdict = root_func.im_class.__dict__
                     else:
                         # FIXME TODO lookup_attribute_chain
@@ -266,10 +300,10 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
             new_subkw = []
         return new_subkw
 
-    if spec.keywords is not None:
+    if signature.parameters.get('kwargs') is not None:
         if verbose:
-            print('[inspect] Checking spec.keywords=%r' % (spec.keywords,))
-        subfunc_name_list = find_funcs_called_with_kwargs(sourcecode, spec.keywords)
+            print('[inspect] Checking signature.parameters["kwargs"]=%r' % (signature.parameters.get('kwargs')))
+        subfunc_name_list = find_funcs_called_with_kwargs(sourcecode, signature.parameters.get('kwargs'))
         if verbose:
             print('[inspect] Checking subfunc_name_list=%r' % (subfunc_name_list,))
         for subfunc_name in subfunc_name_list:
@@ -279,7 +313,8 @@ def recursive_parse_kwargs(root_func, path_=None, verbose=None, max_depth=None):
                     print('[inspect] * Found %r' % (new_subkw,))
                 kwargs_list.extend(new_subkw)
             except TypeError:
-                print('warning: unable to recursivley parse type of : %r' % (subfunc_name,))
+                print('warning: unable to recursively parse type of : %r' % (subfunc_name,))
+
     return kwargs_list
 
 
@@ -332,13 +367,10 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
             if debug:
                 print('\nVISIT FunctionDef node = %r' % (node,))
                 print('node.args.kwarg = %r' % (node.args.kwarg,))
-            if six.PY2:
-                kwarg_name = node.args.kwarg
+            if node.args.kwarg is None:
+                kwarg_name = None
             else:
-                if node.args.kwarg is None:
-                    kwarg_name = None
-                else:
-                    kwarg_name = node.args.kwarg.arg
+                kwarg_name = node.args.kwarg.arg
             if kwarg_name != target_kwargs_name:
                 # target kwargs is still in scope
                 ast.NodeVisitor.generic_visit(self, node)
@@ -356,25 +388,16 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
             else:
                 raise NotImplementedError(
                     'do not know how to parse: node.func = %r' % (node.func,))
-            if six.PY2:
-                kwargs = node.kwargs
-                kwargs_name = None if kwargs is None else kwargs.id
-                if funcname is not None and kwargs_name == target_kwargs_name:
-                    child_funcnamess.append(funcname)
-                if debug:
-                    print('funcname = %r' % (funcname,))
-                    print('kwargs_name = %r' % (kwargs_name,))
-            else:
-                if node.keywords:
-                    for kwargs in node.keywords:
-                        if kwargs.arg is None:
-                            if hasattr(kwargs.value, 'id'):
-                                kwargs_name = kwargs.value.id
-                                if funcname is not None and kwargs_name == target_kwargs_name:
-                                    child_funcnamess.append(funcname)
-                                if debug:
-                                    print('funcname = %r' % (funcname,))
-                                    print('kwargs_name = %r' % (kwargs_name,))
+            if node.keywords:
+                for kwargs in node.keywords:
+                    if kwargs.arg is None:
+                        if hasattr(kwargs.value, 'id'):
+                            kwargs_name = kwargs.value.id
+                            if funcname is not None and kwargs_name == target_kwargs_name:
+                                child_funcnamess.append(funcname)
+                            if debug:
+                                print('funcname = %r' % (funcname,))
+                                print('kwargs_name = %r' % (kwargs_name,))
             ast.NodeVisitor.generic_visit(self, node)
     try:
         KwargParseVisitor().visit(pt)
@@ -382,20 +405,6 @@ def find_funcs_called_with_kwargs(sourcecode, target_kwargs_name='kwargs'):
         raise
     return child_funcnamess
     #print('child_funcnamess = %r' % (child_funcnamess,))
-
-
-def get_func_argspec(func):
-    """
-    wrapper around inspect.getargspec but takes into account utool decorators
-    """
-    if hasattr(func, '_utinfo'):
-        # DEPRICATE THIS PART
-        argspec = func._utinfo['orig_argspec']
-        return argspec
-    if isinstance(func, property):
-        func = func.fget
-    argspec = inspect.getargspec(func)
-    return argspec
 
 
 def get_func_sourcecode(func, strip_def=False, strip_ret=False,
@@ -423,17 +432,13 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
     """
     inspect.linecache.clearcache()  # HACK: fix inspect bug
     sourcefile = inspect.getsourcefile(func)
-    if hasattr(func, '_utinfo'):
-        # DEPRICATE
-        func2 = func._utinfo['orig_func']
-        sourcecode = get_func_sourcecode(func2)
-    elif sourcefile is not None and (sourcefile != '<string>'):
+    if sourcefile is not None and (sourcefile != '<string>'):
         try_limit = 2
         for num_tries in range(try_limit):
             try:
                 #print(func)
                 sourcecode = inspect.getsource(func)
-                if not isinstance(sourcecode, six.text_type):
+                if not isinstance(sourcecode, str):
                     sourcecode = sourcecode.decode('utf-8')
                 #print(sourcecode)
             except (IndexError, OSError, SyntaxError):
@@ -479,7 +484,7 @@ def get_func_sourcecode(func, strip_def=False, strip_ret=False,
             TODO: commit clean version to pyminifier
             """
             import tokenize
-            from six.moves import StringIO
+            from io import StringIO
             io_obj = StringIO(source)
             out = ''
             prev_toktype = tokenize.INDENT

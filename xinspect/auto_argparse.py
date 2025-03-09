@@ -20,7 +20,7 @@ def auto_argparse(func):
     try:
         import xinspect
         kwdefaults = xinspect.get_func_kwargs(func)
-    except Exception as ex:
+    except Exception:
         raise
         kwdefaults = dict(zip(spec.args[-len(spec.defaults):], spec.defaults))
 
@@ -64,7 +64,7 @@ def auto_argparse(func):
                     argkw['type'] = eval(garg['type'], {})
                     # literal_eval doesnt handle types
                     # argkw['type'] = ast.literal_eval(garg['type'])
-            except Exception as ex:
+            except Exception:
                 # print('{}, ex = {!r}'.format(arg, ex))
                 pass
         # print('-----')
