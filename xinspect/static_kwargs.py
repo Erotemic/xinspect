@@ -42,10 +42,6 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
         >>> kwarg_items = parse_kwarg_keys(source, with_vals=with_vals)
         >>> result = ('kwarg_items = %s' % (ub.repr2(kwarg_items, nl=1),))
         >>> kwarg_keys = [item[0] for item in kwarg_items]
-        >>> assert 'baz' not in kwarg_keys
-        >>> assert 'foo' in kwarg_keys
-        >>> assert 'bloop' in kwarg_keys
-        >>> assert 'bop' not in kwarg_keys
         >>> print(result)
         kwarg_items = [
             ('foo', None),
@@ -55,6 +51,10 @@ def parse_kwarg_keys(source, keywords='kwargs', with_vals=False):
             ('foo2', None),
             ('bloop', None),
         ]
+        >>> assert 'baz' not in kwarg_keys
+        >>> assert 'foo' in kwarg_keys
+        >>> assert 'bloop' in kwarg_keys
+        >>> assert 'bop' not in kwarg_keys
     """
     pt = ast.parse(source)
     kwargs_items = []
